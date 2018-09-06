@@ -1,5 +1,5 @@
-require_relative "async4r/version"
 require "lightio"
+require_relative "async4r/version"
 
 LightIO::Monkey.patch_io!
 LightIO::Monkey.patch_kernel!
@@ -7,13 +7,6 @@ LightIO::Monkey.patch_kernel!
 
 module Async4r
   def self.included(klass)
-    # klass.class_eval do
-    #   require "lightio"
-
-    #   LightIO::Monkey.patch_io!
-    #   LightIO::Monkey.patch_kernel!
-    # end
-
     klass.include(ClassMethods)
     klass.extend(self)
   end
@@ -31,16 +24,24 @@ module Async4r
   module ClassMethods
     def await(blocks)
       if blocks.is_a? Array
-        @results = []
-        collect_result = -> (val) { @results << val }
-        blocks.map { |block| run_in_threadlet(collect_result, block) }.each(&:join)
-        @results
+        with_returning([], -> (acc, val) { acc << val }) do |collect_result|
+          blocks.map { |block| run_in_threadlet(collect_result, block) }.each(&:join)
+        end
       else
-        run_in_threadlet(block).join
+        with_returning(nil, ->(acc, val) { acc = val }) do |collect_result|
+          run_in_threadlet(collect_result, block).join
+        end
       end
     end
 
     private
+
+    def with_returning(acc, collector)
+      @accumulator = acc
+      yield(-> (val) { collector.call(@accumulator, val) })
+      @accumulator
+    end
+
 
     def run_in_threadlet(collect_result, block)
       LightIO::Beam.new do
