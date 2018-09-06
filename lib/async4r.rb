@@ -28,8 +28,9 @@ module Async4r
           blocks.map { |block| run_in_threadlet(collect_result, block) }.each(&:join)
         end
       else
-        with_returning(nil, ->(acc, val) { acc = val }) do |collect_result|
-          run_in_threadlet(collect_result, block).join
+        # Ugly hack to change acc, you cannot change it with `acc = val`
+        with_returning([], ->(acc, val) { acc << [:single, val] }) do |collect_result|
+          run_in_threadlet(collect_result, blocks).join
         end
       end
     end
@@ -37,9 +38,15 @@ module Async4r
     private
 
     def with_returning(acc, collector)
-      @accumulator = acc
-      yield(-> (val) { collector.call(@accumulator, val) })
-      @accumulator
+      accumulator = acc
+      yield(-> (val) { collector.call(accumulator, val) })
+
+      # Ugly hack to workaround Ruby "feature"
+      if accumulator.first.first == :single
+        accumulator.first.last
+      else
+        accumulator
+      end
     end
 
 
