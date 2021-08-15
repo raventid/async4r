@@ -1,4 +1,3 @@
-
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "async4r/version"
@@ -6,7 +5,7 @@ require "async4r/version"
 Gem::Specification.new do |spec|
   spec.name          = "async4r"
   spec.version       = Async4r::VERSION
-  spec.authors       = ["Julian Kulesh"]
+  spec.authors       = ["Julian Pokrovsky"]
   spec.email         = ["juliankul@gmail.com"]
 
   spec.summary       = %q{Small wrapper around Threadlet which allows you to emulate async/await notation}
@@ -33,7 +32,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "lightio", "0.4.4"
 
-  spec.add_development_dependency "bundler", "~> 1.16"
+  spec.add_development_dependency "bundler", ">= 2.2.10"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.0"
 end
